@@ -60,6 +60,16 @@ export default class CanvasController {
     this.context.lineJoin = eraser.style;
   }
 
+  changeBrushSize(size) {
+    this.brush.selectedSize = size;
+    this.selectBrush();
+  }
+
+  changeEraserSize(size) {
+    this.eraser.selectedSize = size;
+    this.selectEraser();
+  }
+
   selectBucket() {
     this.context.globalCompositeOperation = 'source-over';
   }
