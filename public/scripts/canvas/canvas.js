@@ -134,6 +134,12 @@ export default class CanvasController {
     this.context.stroke();
   }
 
+  floodFillFromSocket(data) {
+    const { position } = data;
+    const clickedPixel = this.context.getImageData(position[0], position[1], 1, 1).data;
+    floodFill(this.context, position, clickedPixel, data.selectedColor, this.canvas);
+  }
+
   getColor() {
     const pixel = this.context.getImageData(this.currentX, this.currentY, 1, 1).data;
     const rgba = {

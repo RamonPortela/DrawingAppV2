@@ -53,4 +53,8 @@ io.on('connection', (socket) => {
   socket.on('draw', (data) => {
     io.emit('draw', data);
   });
+
+  socket.on('flood', (data) => {
+    io.emit('flood', data);
+  });
 });
