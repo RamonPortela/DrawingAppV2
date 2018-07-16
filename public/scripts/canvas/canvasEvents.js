@@ -10,13 +10,14 @@ export default class CanvasEvents {
     c.drawing = false;
 
     if (this.pathArray.length > 0) {
-      this.socket.sendDraw(this.pathArray, canvas.brush);
+      this.socket.sendDraw(this.pathArray, CanvasEvents.getBrushOrEraser(canvas), canvas.selectedColor);
       this.pathArray = [];
     }
   }
 
   clickStartHandler(event, canvas) {
     event.preventDefault();
+
     const c = canvas;
     if (event.buttons > 1) {
       return;
@@ -27,12 +28,21 @@ export default class CanvasEvents {
 
     c.drawing = true;
 
+    if (canvas.selectedTool === 'bucket') {
+      return;
+    }
+
+    if (canvas.selectedTool === 'picker') {
+      return;
+    }
+
     this.pathArray.push({ x: canvas.currentX, y: canvas.currentY });
-    this.socket.sendDraw(this.pathArray, canvas.brush);
+    this.socket.sendDraw(this.pathArray, CanvasEvents.getBrushOrEraser(canvas), canvas.selectedColor);
   }
 
   touchStartHandler(event, canvas) {
     event.preventDefault();
+
     const c = canvas;
     const touches = event.changedTouches;
 
@@ -48,7 +58,7 @@ export default class CanvasEvents {
     c.drawing = true;
 
     this.pathArray.push({ x: canvas.currentX, y: canvas.currentY });
-    this.socket.sendDraw(this.pathArray, canvas.brush);
+    this.socket.sendDraw(this.pathArray, CanvasEvents.getBrushOrEraser(canvas), canvas.selectedColor);
   }
 
   mouseMoveHandler(event, canvas) {
@@ -62,7 +72,7 @@ export default class CanvasEvents {
       canvas.draw(false);
       this.pathArray.push({ x: canvas.currentX, y: canvas.currentY });
       if (this.pathArray.length === 50) {
-        this.socket.sendDraw(this.pathArray, canvas.brush);
+        this.socket.sendDraw(this.pathArray, CanvasEvents.getBrushOrEraser(canvas), canvas.selectedColor);
         this.pathArray = this.pathArray.slice(49);
       }
     }
@@ -88,9 +98,13 @@ export default class CanvasEvents {
       canvas.draw(false);
       this.pathArray.push({ x: canvas.currentX, y: canvas.currentY });
       if (this.pathArray.length === 50) {
-        this.socket.sendDraw(this.pathArray, canvas.brush);
+        this.socket.sendDraw(this.pathArray, CanvasEvents.getBrushOrEraser(canvas), canvas.selectedColor);
         this.pathArray = this.pathArray.slice(49);
       }
     }
+  }
+
+  static getBrushOrEraser(canvas) {
+    return canvas.selectedTool === 'brush' ? canvas.brush : canvas.eraser;
   }
 }

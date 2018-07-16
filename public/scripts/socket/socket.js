@@ -19,9 +19,11 @@ export default class Socket {
     });
   }
 
-  sendDraw(pathArray, brush) {
+  sendDraw(pathArray, brush, color) {
+    const newBrush = Object.assign(brush, { selectedColor: color });
+
     this.socket.emit('draw', {
-      path: pathArray, brush, id: this.socket.id, notify: this.notificar,
+      path: pathArray, brush: newBrush, id: this.socket.id, notify: this.notificar,
     });
   }
 }

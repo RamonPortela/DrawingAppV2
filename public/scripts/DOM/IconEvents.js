@@ -1,3 +1,5 @@
+import { hexToRGBA } from '../utils/color';
+
 export default class IconEvents {
   constructor(canvasController) {
     this.canvasController = canvasController;
@@ -7,38 +9,72 @@ export default class IconEvents {
     this.bucketIcon = document.getElementById('bucket-icon');
     this.pickerIcon = document.getElementById('picker-icon');
     this.textIcon = document.getElementById('text-icon');
-    this.colorIcon = document.getElementById('icon-color');
+    this.colorIcon = document.getElementById('color-icon');
     this.clearIcon = document.getElementById('clear-icon');
+
+    this.colorPicker = document.createElement('input');
+    this.colorPicker.setAttribute('type', 'color');
   }
 
   setEvents() {
     this.burguerIcon.addEventListener('click', (event) => {});
-    this.brushIcon.addEventListener('click', (event) => { this.openSizeMenus(event, 'brush'); });
-    this.eraserIcon.addEventListener('click', (event) => { this.openSizeMenus(event, 'eraser'); });
+    this.brushIcon.addEventListener('click', (event) => { this.selectTool(event, this.brushIcon, 'brush'); });
+    this.eraserIcon.addEventListener('click', (event) => { this.selectTool(event, this.eraserIcon, 'eraser'); });
+    this.bucketIcon.addEventListener('click', (event) => { this.selectTool(event, this.bucketIcon, 'bucket'); });
+    this.pickerIcon.addEventListener('click', (event) => { this.selectTool(event, this.pickerIcon, 'picker'); });
+    this.colorIcon.addEventListener('click', (event) => { this.colorPicker.click(); });
+    this.colorPicker.addEventListener('change', (event) => { this.changeColor(); });
   }
 
-  openSizeMenus(event, tool) {
+  selectTool(event, element, tool) {
     event.preventDefault();
     event.stopPropagation();
 
     IconEvents.closeOpenedSizeMenu();
     IconEvents.removeActiveClass();
 
+    element.firstElementChild.classList.add('tools-menu__icon--active');
+
     if (tool === 'brush') {
-      this.activeSizeMenu(this.brushIcon, 'brush');
-    } else {
-      this.activeSizeMenu(this.eraserIcon, 'eraser');
+      this.openSizeMenu(element, 'brush');
+      return;
+    }
+    if (tool === 'eraser') {
+      this.openSizeMenu(element, 'eraser');
+      return;
+    }
+    if (tool === 'bucket') {
+      this.selectBucket();
+      return;
+    }
+
+    if (tool === 'picker') {
+      this.selectPicker();
     }
   }
 
-  activeSizeMenu(element, type) {
+  openSizeMenu(element, type) {
     if (element.childElementCount > 1) {
       return;
     }
-    element.firstElementChild.classList.add('tools-menu__icon--active');
-    if (type === 'brush') { this.canvasController.selectBrush(); } else { this.canvasController.selectEraser(); }
+
+    if (type === 'brush') {
+      this.canvasController.selectBrush();
+      this.canvasController.selectedTool = 'brush';
+    } else {
+      this.canvasController.selectEraser();
+      this.canvasController.selectedTool = 'eraser';
+    }
 
     this.createSizeMenuElement(element, type);
+  }
+
+  selectBucket() {
+    this.canvasController.selectedTool = 'bucket';
+  }
+
+  selectPicker() {
+    this.canvasController.selectedTool = 'picker';
   }
 
   createSizeMenuElement(element, type) {
@@ -49,11 +85,20 @@ export default class IconEvents {
 
     divSizeMenu.innerHTML = sizes.map((size, index) => `
     <div class="tools-menu__size-container" data-size="${size}">
-        <div class="tools-menu__size--${index + 1} ${this.canvasController[type].selectedSize === size ? 'tools-menu__size--active' : ''}"></div>
+        <div class="tools-menu__size--${index + 1}"></div>
     </div>
     `).join('');
-
     element.appendChild(divSizeMenu);
+    document.querySelector(`[data-size='${this.canvasController[type].selectedSize}']`).firstElementChild.classList.add('tools-menu__size--active');
+  }
+
+  changeColor() {
+    const selectedColorRGBA = hexToRGBA(this.colorPicker.value);
+    const selectedColor = `RGBA(${selectedColorRGBA.r},${selectedColorRGBA.g},${selectedColorRGBA.b},${selectedColorRGBA.a})`;
+    this.canvasController.selectedColorRGBA = selectedColorRGBA;
+    this.canvasController.selectedColor = selectedColor;
+    this.canvasController.changeColor();
+    document.documentElement.style.setProperty('--selected-color', selectedColor);
   }
 
   static closeOpenedSizeMenu() {

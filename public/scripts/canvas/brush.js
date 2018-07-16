@@ -1,10 +1,10 @@
 export default class Brush {
-  constructor() {
+  constructor(isBrush) {
     this.minBrushSize = 5;
     this.maxBrushSize = 25;
     this.selectedSize = 5;
-    this.color = 'black';
     this.style = 'round';
+    this.isBrush = isBrush;
   }
 
   changeSize(size) {
