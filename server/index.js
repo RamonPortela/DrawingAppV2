@@ -10,9 +10,9 @@ const path = require('path');
 
 const serverPort = process.env.PORT || 8080;
 const serverIpAddress = '0.0.0.0' || '127.0.0.1';
-const undo = [];
-const redo = [];
-const currentState = null;
+let undo = [];
+let redo = [];
+let currentState = null;
 let connectedUsers = 0;
 const usersFocusingPage = 0;
 
@@ -37,7 +37,8 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  connectedUsers++;
+  connectedUsers += 1;
+  socket.emit('getCurrentDrawing', { image: currentState });
   // on connection call send new user online event
   // io.emit('connectionevent', connectedusers);
 
@@ -45,9 +46,13 @@ io.on('connection', (socket) => {
   // socket.emit('getCurrentDrawing', {image: currentState});
 
   socket.on('disconnect', () => {
-    connectedUsers--;
+    connectedUsers -= 1;
     // on connection call send new user online event
     // io.emit('connectionevent', connectedusers);
+  });
+
+  socket.on('getCurrentDrawing', () => {
+    socket.emit('getCurrentDrawing', { image: currentState });
   });
 
   socket.on('draw', (data) => {
@@ -56,5 +61,40 @@ io.on('connection', (socket) => {
 
   socket.on('flood', (data) => {
     io.emit('flood', data);
+  });
+
+  socket.on('newDrawData', (drawData) => {
+    if (undo.length < 5) {
+      undo.push(drawData.previous);
+    } else {
+      undo = undo.slice(1);
+      undo.push(drawData.previous);
+    }
+    currentState = drawData.current;
+    redo = [];
+  });
+
+  socket.on('undo', () => {
+    if (undo.length < 1) {
+      io.emit('undo', { image: null });
+      return;
+    }
+    io.emit('undo', { image: undo[undo.length - 1] });
+    redo.push(currentState);
+    currentState = undo.pop();
+  });
+
+  socket.on('redo', () => {
+    if (redo.length < 1) {
+      io.emit('redo', { image: null });
+      return;
+    }
+    io.emit('redo', { image: redo[redo.length - 1] });
+    undo.push(currentState);
+    currentState = redo.pop();
+  });
+
+  socket.on('clear', () => {
+    io.emit('clear');
   });
 });

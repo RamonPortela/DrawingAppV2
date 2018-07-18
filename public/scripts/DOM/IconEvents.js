@@ -24,6 +24,7 @@ export default class IconEvents {
     this.pickerIcon.addEventListener('click', (event) => { this.selectTool(event, this.pickerIcon, 'picker'); });
     this.colorIcon.addEventListener('click', (event) => { this.colorPicker.click(); });
     this.colorPicker.addEventListener('change', (event) => { this.changeColor(); });
+    this.clearIcon.addEventListener('click', (event) => { this.selectTool(event, this.clearIcon, 'clear'); });
   }
 
   selectTool(event, element, tool) {
@@ -34,6 +35,7 @@ export default class IconEvents {
     IconEvents.removeActiveClass();
 
     element.firstElementChild.classList.add('tools-menu__icon--active');
+
 
     if (tool === 'brush') {
       this.openSizeMenu(element, 'brush');
@@ -50,6 +52,11 @@ export default class IconEvents {
 
     if (tool === 'picker') {
       this.selectPicker();
+    }
+
+    if (tool === 'clear') {
+      this.clearCanvas();
+      this.brushIcon.click();
     }
   }
 
@@ -75,6 +82,10 @@ export default class IconEvents {
 
   selectPicker() {
     this.canvasController.selectedTool = 'picker';
+  }
+
+  clearCanvas() {
+    this.canvasController.clearCanvas();
   }
 
   createSizeMenuElement(element, type) {

@@ -12,6 +12,8 @@ export default class CanvasController {
     this.context = this.canvas.getContext('2d');
 
     this.canvasContainer = this.canvas.parentElement;
+    this.btnUndo = document.getElementById('btn-undo');
+    this.btnRedo = document.getElementById('btn-redo');
 
     this.selectedTool = 'brush';
     this.selectedColor = 'black';
@@ -28,6 +30,8 @@ export default class CanvasController {
     this.currentY = null;
     this.previousX = null;
     this.previousY = null;
+    this.previousDrawing = null;
+    this.currentDrawing = null;
 
     this.events = new CanvasEvents(socket);
     this.iconEvents = new IconEvents(this);
@@ -41,7 +45,7 @@ export default class CanvasController {
 
   resizeCanvas() {
     this.width = this.canvasContainer.clientWidth;
-    this.height = (this.width / 16) * 9;
+    this.height = Math.floor((this.width / 16) * 9);
 
     this.setCanvasStyle(this.width, this.height);
 
@@ -94,10 +98,12 @@ export default class CanvasController {
   }
 
   draw(firstClick) {
+    this.previousDrawing = this.canvas.toDataURL();
     if (this.selectedTool === 'bucket') {
       const position = [this.currentX, this.currentY];
       const clickedPixel = this.context.getImageData(this.currentX, this.currentY, 1, 1).data;
       floodFill(this.context, position, clickedPixel, this.selectedColorRGBA, this.canvas);
+      this.currentDrawing = this.canvas.toDataURL();
       return;
     }
 
@@ -114,6 +120,7 @@ export default class CanvasController {
     }
     this.context.lineTo(this.currentX, this.currentY);
     this.context.stroke();
+    this.currentDrawing = this.canvas.toDataURL();
   }
 
   drawFromSocket(data) {
@@ -161,16 +168,47 @@ export default class CanvasController {
     // btnPincel.click();
   }
 
+  setImage(image, clear = false) {
+    if (clear) {
+      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      return;
+    }
+
+    if (image === null) {
+      return;
+    }
+
+    const baseImage = new Image();
+    baseImage.src = image;
+    baseImage.onload = () => {
+      const currentGlobalCompositeOperation = this.context.globalCompositeOperation;
+      this.context.globalCompositeOperation = 'source-over';
+      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.context.drawImage(baseImage, 0, 0, this.canvas.width, this.canvas.height);
+      this.context.globalCompositeOperation = currentGlobalCompositeOperation;
+    };
+  }
+
+  clearCanvas() {
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.events.clearCanvas(this);
+  }
+
   setEvents() {
-    this.canvas.addEventListener('mousedown', (event) => { this.events.clickStartHandler(event, this); });
-    this.canvas.addEventListener('touchstart', (event) => { this.events.touchStartHandler(event, this); });
+    this.btnUndo.addEventListener('mousedown', (event) => { this.events.undo(event); });
+    this.btnRedo.addEventListener('mousedown', (event) => { this.events.redo(event); });
+    this.btnUndo.addEventListener('touchstart', (event) => { this.events.undo(event); });
+    this.btnRedo.addEventListener('touchstart', (event) => { this.events.redo(event); });
 
-    this.canvas.addEventListener('mouseup', (event) => { this.events.stopDrawing(event, this); });
-    this.canvas.addEventListener('mouseout', (event) => { this.events.stopDrawing(event, this); });
-    this.canvas.addEventListener('touchend', (event) => { this.events.stopDrawing(event, this); });
-    this.canvas.addEventListener('touchcancel', (event) => { this.events.stopDrawing(event, this); });
+    this.canvasContainer.addEventListener('mousedown', (event) => { this.events.clickStartHandler(event, this); });
+    this.canvasContainer.addEventListener('touchstart', (event) => { this.events.touchStartHandler(event, this); });
 
-    this.canvas.addEventListener('mousemove', (event) => { this.events.mouseMoveHandler(event, this); });
-    this.canvas.addEventListener('touchmove', (event) => { this.events.toucheMoveHandler(event, this); });
+    this.canvasContainer.addEventListener('mouseup', (event) => { this.events.stopDrawing(event, this); });
+    this.canvasContainer.addEventListener('mouseout', (event) => { this.events.stopDrawing(event, this); });
+    this.canvasContainer.addEventListener('touchend', (event) => { this.events.stopDrawing(event, this); });
+    this.canvasContainer.addEventListener('touchcancel', (event) => { this.events.stopDrawing(event, this); });
+
+    this.canvasContainer.addEventListener('mousemove', (event) => { this.events.mouseMoveHandler(event, this); });
+    this.canvasContainer.addEventListener('touchmove', (event) => { this.events.toucheMoveHandler(event, this); });
   }
 }

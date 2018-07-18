@@ -39,6 +39,25 @@ body{
     grid-area: canvas;
     justify-self: stretch;
     align-self: center;
+    position: relative;
+}
+
+.btn-canvas{
+    position: absolute;
+    border: 0;
+    background-color: rgba(110, 110, 110, 0.5);
+    height: 5rem;
+    width: 5rem;
+    border-radius: 50%;
+    bottom: 2rem;
+}
+
+.btn-canvas--undo{
+    left: 3rem;
+}
+
+.btn-canvas--redo{
+    right: 3rem;
 }
 
 .tools-menu{

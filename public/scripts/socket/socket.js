@@ -27,6 +27,22 @@ export default class Socket {
 
       canvasController.floodFillFromSocket(data);
     });
+
+    this.socket.on('getCurrentDrawing', (data) => {
+      Socket.setImage(data, canvasController);
+    });
+
+    this.socket.on('undo', (data) => {
+      Socket.setImage(data, canvasController);
+    });
+
+    this.socket.on('redo', (data) => {
+      Socket.setImage(data, canvasController);
+    });
+
+    this.socket.on('clear', () => {
+      canvasController.setImage(null, true);
+    });
   }
 
   // function that sends the draw event
@@ -47,5 +63,30 @@ export default class Socket {
       selectedColor,
       id: this.socket.id,
     });
+  }
+
+  sendDrawData(drawData) {
+    this.socket.emit('newDrawData', drawData);
+  }
+
+  sendUndo() {
+    this.socket.emit('undo');
+  }
+
+  sendRedo() {
+    this.socket.emit('redo');
+  }
+
+  sendClear() {
+    this.socket.emit('clear');
+  }
+
+
+  static setImage(data, canvasController) {
+    const { image } = data;
+
+    if (image !== null) {
+      canvasController.setImage(image);
+    }
   }
 }
