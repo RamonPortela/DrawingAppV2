@@ -19,9 +19,9 @@ export default class CanvasEvents {
   clickStartHandler(event, canvas) {
     event.preventDefault();
 
-    if (event.type !== 'mousedown') {
-      return;
-    }
+    // if (event.type !== 'mousedown') {
+    //   return;
+    // }
 
     if (event.buttons > 1) {
       return;
