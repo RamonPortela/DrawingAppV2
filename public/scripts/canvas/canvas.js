@@ -98,12 +98,10 @@ export default class CanvasController {
   }
 
   draw(firstClick) {
-    this.previousDrawing = this.canvas.toDataURL();
     if (this.selectedTool === 'bucket') {
       const position = [this.currentX, this.currentY];
       const clickedPixel = this.context.getImageData(this.currentX, this.currentY, 1, 1).data;
       floodFill(this.context, position, clickedPixel, this.selectedColorRGBA, this.canvas);
-      this.currentDrawing = this.canvas.toDataURL();
       return;
     }
 
@@ -120,7 +118,6 @@ export default class CanvasController {
     }
     this.context.lineTo(this.currentX, this.currentY);
     this.context.stroke();
-    this.currentDrawing = this.canvas.toDataURL();
   }
 
   drawFromSocket(data) {
@@ -190,7 +187,9 @@ export default class CanvasController {
   }
 
   clearCanvas() {
+    this.previousDrawing = this.canvas.toDataURL();
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.currentDrawing = this.canvas.toDataURL();
     this.events.clearCanvas(this);
   }
 
