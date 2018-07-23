@@ -1,13 +1,20 @@
-import Brush from './brush';
+//import Brush from './brush';
 import CanvasEvents from './canvasEvents';
 import floodFill from './bucket';
 import IconEvents from '../DOM/IconEvents';
 import { rgbToHex } from '../utils/color';
+import Brush from './tools/brush';
 
 export default class CanvasController {
   constructor(socket) {
-    this.brush = new Brush(true);
-    this.eraser = new Brush(false);
+    //this.brush = new Brush(true);
+    //this.eraser = new Brush(false);
+
+    this.tools = {
+      brush: new Brush(socket)
+    }
+
+
     this.canvas = document.getElementById('canvas');
     this.context = this.canvas.getContext('2d');
 
@@ -15,7 +22,7 @@ export default class CanvasController {
     this.btnUndo = document.getElementById('btn-undo');
     this.btnRedo = document.getElementById('btn-redo');
 
-    this.selectedTool = 'brush';
+    this.selectedTool = this.tools.brush;
     this.selectedColor = 'black';
     this.selectedColorRGBA = {
       r: 0, g: 0, b: 0, a: 255,
@@ -52,20 +59,36 @@ export default class CanvasController {
     this.canvasContainer.style.height = `${this.height}px`;
   }
 
-  selectBrush(brush = this.brush) {
-    this.context.globalCompositeOperation = 'source-over';
-    this.context.strokeStyle = brush.selectedColor || this.selectedColor;
-    this.context.lineWidth = brush.selectedSize;
-    this.context.lineCap = brush.style;
-    this.context.lineJoin = brush.style;
+  selectBrush(){
+    this.selectedTool = this.tools.brush;
+    this.context.globalCompositeOperation = this.selectedTool.compositeOperation;
+    this.context.lineWidth = this.selectedTool.selectedSize;
+    this.context.lineCap = this.selectedTool.style;
+    this.context.lineJoin = this.selectedTool.style;
   }
 
-  selectEraser(eraser = this.eraser) {
-    this.context.globalCompositeOperation = 'destination-out';
-    this.context.lineWidth = eraser.selectedSize;
-    this.context.lineCap = eraser.style;
-    this.context.lineJoin = eraser.style;
-  }
+  // setToolStyle() {
+  //   this.context.globalCompositeOperation = this.selectedTool.compositeOperation;
+  //   this.context.strokeStyle = brush.selectedColor || this.selectedColor;
+  //   this.context.lineWidth = this.selectedTool.selectedSize;
+  //   this.context.lineCap = brush.style;
+  //   this.context.lineJoin = brush.style;
+  // }
+
+  // selectBrush(brush = this.brush) {
+  //   this.context.globalCompositeOperation = 'source-over';
+  //   this.context.strokeStyle = brush.selectedColor || this.selectedColor;
+  //   this.context.lineWidth = brush.selectedSize;
+  //   this.context.lineCap = brush.style;
+  //   this.context.lineJoin = brush.style;
+  // }
+
+  // selectEraser(eraser = this.eraser) {
+  //   this.context.globalCompositeOperation = 'destination-out';
+  //   this.context.lineWidth = eraser.selectedSize;
+  //   this.context.lineCap = eraser.style;
+  //   this.context.lineJoin = eraser.style;
+  // }
 
   changeBrushValues(newValues) {
     this.brush = Object.assign(this.brush, newValues);

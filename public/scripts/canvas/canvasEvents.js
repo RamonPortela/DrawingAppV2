@@ -52,6 +52,10 @@ export default class CanvasEvents {
   handleClickTouch(canvas) {
     const c = canvas;
 
+    canvas.selectedTool.action(canvas);
+    return;
+
+
     if (canvas.selectedTool === 'bucket') {
       const position = [canvas.currentX, canvas.currentY];
       const selectedColor = canvas.selectedColorRGBA;

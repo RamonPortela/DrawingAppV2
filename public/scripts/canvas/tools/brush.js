@@ -1,8 +1,8 @@
-import { FreeHandTool } from './freeHandTool';
+import FreeHandTool from './freeHandTool';
 
 export default class Brush extends FreeHandTool{
-    constructor(){
-        super();
+    constructor(socket){
+        super(socket);
 
         this.compositeOperation = 'source-over';
     }

@@ -1,7 +1,8 @@
-import { Tool } from './tool';
+import Tool from './tool';
 
 export default class FreeHandTool extends Tool{
-    constructor(){
+    constructor(socket){
+        super(socket);
         if (this.constructor === FreeHandTool) {
             throw new TypeError("Cannot construct Abstract instances directly");
         }
