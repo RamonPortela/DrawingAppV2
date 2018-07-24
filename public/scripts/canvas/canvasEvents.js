@@ -1,20 +1,17 @@
 export default class CanvasEvents {
-  constructor(socket) {
-    this.socket = socket;
+  constructor() {
     this.pathArray = [];
   }
 
   stopDrawing(event, canvas) {
     event.preventDefault();
+
     const c = canvas;
     c.drawing = false;
 
-    if (this.pathArray.length > 0) {
-      c.currentDrawing = c.canvas.toDataURL();
-      this.socket.sendDraw(this.pathArray, CanvasEvents.getBrushOrEraser(canvas), canvas.selectedColor);
-      this.socket.sendDrawData({ current: canvas.currentDrawing, previous: canvas.previousDrawing });
-      this.pathArray = [];
-    }
+    canvas.selectedTool.sendToSocket(canvas, this.pathArray);
+
+    this.pathArray = [];
   }
 
   clickStartHandler(event, canvas) {
@@ -52,31 +49,29 @@ export default class CanvasEvents {
   handleClickTouch(canvas) {
     const c = canvas;
 
-    canvas.selectedTool.action(canvas);
-    return;
-
-
-    if (canvas.selectedTool === 'bucket') {
-      const position = [canvas.currentX, canvas.currentY];
-      const selectedColor = canvas.selectedColorRGBA;
-      c.previousDrawing = c.canvas.toDataURL();
-      canvas.draw(true);
-      c.currentDrawing = c.canvas.toDataURL();
-      this.socket.sendFloodFill(position, selectedColor);
-      this.socket.sendDrawData({ current: canvas.currentDrawing, previous: canvas.previousDrawing });
-      return;
-    }
-
-    if (canvas.selectedTool === 'picker') {
-      canvas.getColor();
-      return;
-    }
-
-    c.previousDrawing = c.canvas.toDataURL();
-    canvas.draw(true);
+    canvas.selectedTool.action(canvas, this.pathArray, true);
     c.drawing = true;
 
-    this.pathArray.push({ x: canvas.currentX, y: canvas.currentY });
+
+    // if (canvas.selectedTool === 'bucket') {
+    //   const position = [canvas.currentX, canvas.currentY];
+    //   const selectedColor = canvas.selectedColorRGBA;
+    //   c.previousDrawing = c.canvas.toDataURL();
+    //   canvas.draw(true);
+    //   c.currentDrawing = c.canvas.toDataURL();
+    //   this.socket.sendFloodFill(position, selectedColor);
+    //   this.socket.sendDrawData({ current: canvas.currentDrawing, previous: canvas.previousDrawing });
+    // }
+
+    // if (canvas.selectedTool === 'picker') {
+    //   canvas.getColor();
+    // }
+
+    // c.previousDrawing = c.canvas.toDataURL();
+    // canvas.draw(true);
+    // c.drawing = true;
+
+    // this.pathArray.push({ x: canvas.currentX, y: canvas.currentY });
   }
 
   mouseMoveHandler(event, canvas) {
@@ -107,10 +102,10 @@ export default class CanvasEvents {
   handleClickTouchMove(canvas, position) {
     if (canvas.drawing) {
       canvas.setPositions(position.x, position.y);
-      canvas.draw(false);
-      this.pathArray.push({ x: canvas.currentX, y: canvas.currentY });
+      canvas.selectedTool.action(canvas, this.pathArray);
       if (this.pathArray.length === 50) {
-        this.socket.sendDraw(this.pathArray, CanvasEvents.getBrushOrEraser(canvas), canvas.selectedColor);
+        canvas.selectedTool.sendToSocket(canvas, this.pathArray);
+        // this.socket.sendDraw(this.pathArray, canvas.selectedTool, canvas.selectedColor);
         this.pathArray = this.pathArray.slice(49);
       }
     }
@@ -133,9 +128,5 @@ export default class CanvasEvents {
   clearCanvas(canvas) {
     this.socket.sendClear();
     this.socket.sendDrawData({ current: canvas.currentDrawing, previous: canvas.previousDrawing });
-  }
-
-  static getBrushOrEraser(canvas) {
-    return canvas.selectedTool === 'brush' ? canvas.brush : canvas.eraser;
   }
 }

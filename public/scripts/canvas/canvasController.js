@@ -1,18 +1,20 @@
-//import Brush from './brush';
+// import Brush from './brush';
 import CanvasEvents from './canvasEvents';
 import floodFill from './bucket';
 import IconEvents from '../DOM/IconEvents';
 import { rgbToHex } from '../utils/color';
 import Brush from './tools/brush';
+import Eraser from './tools/eraser';
 
 export default class CanvasController {
   constructor(socket) {
-    //this.brush = new Brush(true);
-    //this.eraser = new Brush(false);
+    // this.brush = new Brush(true);
+    // this.eraser = new Brush(false);
 
     this.tools = {
-      brush: new Brush(socket)
-    }
+      brush: new Brush(),
+      eraser: new Eraser(),
+    };
 
 
     this.canvas = document.getElementById('canvas');
@@ -40,9 +42,11 @@ export default class CanvasController {
     this.previousDrawing = null;
     this.currentDrawing = null;
 
-    this.events = new CanvasEvents(socket);
+    this.events = new CanvasEvents();
     this.iconEvents = new IconEvents(this);
     this.iconEvents.setEvents();
+
+    this.socket = socket;
   }
 
   setCanvasStyle(width, height) {
@@ -59,13 +63,31 @@ export default class CanvasController {
     this.canvasContainer.style.height = `${this.height}px`;
   }
 
-  selectBrush(){
-    this.selectedTool = this.tools.brush;
+  selectTool(tool = null) {
+    if (tool) {
+      this.selectedTool = tool;
+    }
     this.context.globalCompositeOperation = this.selectedTool.compositeOperation;
     this.context.lineWidth = this.selectedTool.selectedSize;
     this.context.lineCap = this.selectedTool.style;
     this.context.lineJoin = this.selectedTool.style;
   }
+
+  selectToolSocket(tool) {
+    this.context.globalCompositeOperation = tool.compositeOperation;
+    this.context.lineWidth = tool.selectedSize;
+    this.context.lineCap = tool.style;
+    this.context.lineJoin = tool.style;
+  }
+
+
+  // selectBrush() {
+  //   this.selectedTool = this.tools.brush;
+  //   this.context.globalCompositeOperation = this.selectedTool.compositeOperation;
+  //   this.context.lineWidth = this.selectedTool.selectedSize;
+  //   this.context.lineCap = this.selectedTool.style;
+  //   this.context.lineJoin = this.selectedTool.style;
+  // }
 
   // setToolStyle() {
   //   this.context.globalCompositeOperation = this.selectedTool.compositeOperation;
@@ -90,15 +112,19 @@ export default class CanvasController {
   //   this.context.lineJoin = eraser.style;
   // }
 
-  changeBrushValues(newValues) {
-    this.brush = Object.assign(this.brush, newValues);
-    this.selectBrush();
+  changeToolSize(newSize) {
+    this.selectedTool.changeSize(newSize);
   }
 
-  changeEraserValues(newValues) {
-    this.eraser = Object.assign(this.eraser, newValues);
-    this.selectEraser();
-  }
+  // changeBrushValues(newValues) {
+  //   this.brush = Object.assign(this.brush, newValues);
+  //   this.selectBrush();
+  // }
+
+  // changeEraserValues(newValues) {
+  //   this.eraser = Object.assign(this.eraser, newValues);
+  //   this.selectEraser();
+  // }
 
   changeColor() {
     this.context.strokeStyle = this.selectedColor;
@@ -144,18 +170,20 @@ export default class CanvasController {
   }
 
   drawFromSocket(data) {
+    const type = data.isBrush ? new Brush() : new Eraser();
+    const brush = Object.assign(type, data.brush);
+
     this.context.beginPath();
     this.context.moveTo(data.path[0].x, data.path[0].y);
 
+    this.selectTool(brush);
     if (data.path.length === 1) {
-      if (data.brush.isBrush) { this.selectBrush(data.brush); } else { this.selectEraser(data.brush); }
       this.context.lineTo(data.path[0].x, data.path[0].y);
       this.context.stroke();
       return;
     }
 
     for (let i = 1; i < data.path.length; i += 1) {
-      if (data.brush.isBrush) { this.selectBrush(data.brush); } else { this.selectEraser(data.brush); }
       this.context.lineTo(data.path[i].x, data.path[i].y);
     }
     this.context.stroke();
@@ -186,6 +214,14 @@ export default class CanvasController {
     // line.color = colorDiv.style.backgroundColor = "RGBA("+pixel[0]+", "+pixel[1]+", "+pixel[2]+", 255)";
     // colorInput.value = rgbToHex(pixel[0], pixel[1], pixel[2]);
     // btnPincel.click();
+  }
+
+  savePreviousDrawing() {
+    this.previousDrawing = this.canvas.toDataURL();
+  }
+
+  saveCurrentDrawing() {
+    this.currentDrawing = this.canvas.toDataURL();
   }
 
   setImage(image, clear = false) {

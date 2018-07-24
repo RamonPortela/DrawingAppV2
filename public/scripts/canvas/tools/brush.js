@@ -1,14 +1,17 @@
 import FreeHandTool from './freeHandTool';
 
-export default class Brush extends FreeHandTool{
-    constructor(socket){
-        super(socket);
+export default class Brush extends FreeHandTool {
+  constructor() {
+    super();
+    this.compositeOperation = 'source-over';
+  }
 
-        this.compositeOperation = 'source-over';
+  action(canvasController, pathArray = null, firstClick = false) {
+    if (firstClick) {
+      canvasController.savePreviousDrawing();
     }
-
-    action(canvasController){
-        canvasController.selectBrush(this);
-        FreeHandTool.draw(canvasController);
-    }
+    canvasController.selectTool(this);
+    FreeHandTool.draw(canvasController, firstClick);
+    pathArray.push({ x: canvasController.currentX, y: canvasController.currentY });
+  }
 }

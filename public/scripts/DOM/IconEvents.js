@@ -1,4 +1,6 @@
 import { hexToRGBA } from '../utils/color';
+import FreeHandTool from '../canvas/tools/freeHandTool';
+import Brush from '../canvas/tools/brush';
 
 export default class IconEvents {
   constructor(canvasController) {
@@ -18,8 +20,8 @@ export default class IconEvents {
 
   setEvents() {
     this.burguerIcon.addEventListener('click', (event) => {});
-    this.brushIcon.addEventListener('click', (event) => { this.selectTool(event, this.brushIcon, 'brush'); });
-    this.eraserIcon.addEventListener('click', (event) => { this.selectTool(event, this.eraserIcon, 'eraser'); });
+    this.brushIcon.addEventListener('click', (event) => { this.selectTool(event, this.brushIcon, this.canvasController.tools.brush); });
+    this.eraserIcon.addEventListener('click', (event) => { this.selectTool(event, this.eraserIcon, this.canvasController.tools.eraser); });
     this.bucketIcon.addEventListener('click', (event) => { this.selectTool(event, this.bucketIcon, 'bucket'); });
     this.pickerIcon.addEventListener('click', (event) => { this.selectTool(event, this.pickerIcon, 'picker'); });
     this.colorIcon.addEventListener('click', (event) => { this.colorPicker.click(); });
@@ -36,59 +38,48 @@ export default class IconEvents {
 
     element.firstElementChild.classList.add('tools-menu__icon--active');
 
-
-    if (tool === 'brush') {
-      this.openSizeMenu(element, 'brush');
-      return;
-    }
-    if (tool === 'eraser') {
-      this.openSizeMenu(element, 'eraser');
-      return;
-    }
-    if (tool === 'bucket') {
-      this.selectBucket();
+    if (tool instanceof FreeHandTool) {
+      this.openSizeMenu(element, tool);
       return;
     }
 
-    if (tool === 'picker') {
-      this.selectPicker();
-    }
+    this.canvasController.selectTool(tool);
 
-    if (tool === 'clear') {
-      this.clearCanvas();
-      this.brushIcon.click();
-    }
+    // if (tool === 'bucket') {
+    //   this.selectBucket();
+    //   return;
+    // }
+
+    // if (tool === 'picker') {
+    //   this.selectPicker();
+    //   return;
+    // }
+
+    this.clearCanvas();
+    this.brushIcon.click();
   }
 
-  openSizeMenu(element, type) {
+  openSizeMenu(element, tool) {
     if (element.childElementCount > 1) {
       return;
     }
-
-    if (type === 'brush') {
-      this.canvasController.selectBrush();
-      this.canvasController.selectedTool = 'brush';
-    } else {
-      this.canvasController.selectEraser();
-      this.canvasController.selectedTool = 'eraser';
-    }
-
-    this.createSizeMenuElement(element, type);
+    this.canvasController.selectTool(tool);
+    IconEvents.createSizeMenuElement(element, tool);
   }
 
-  selectBucket() {
-    this.canvasController.selectedTool = 'bucket';
-  }
+  // selectBucket() {
+  //   this.canvasController.selectedTool = 'bucket';
+  // }
 
-  selectPicker() {
-    this.canvasController.selectedTool = 'picker';
-  }
+  // selectPicker() {
+  //   this.canvasController.selectedTool = 'picker';
+  // }
 
   clearCanvas() {
     this.canvasController.clearCanvas();
   }
 
-  createSizeMenuElement(element, type) {
+  static createSizeMenuElement(element, tool) {
     const sizes = [5, 10, 15, 20, 25];
     const divSizeMenu = document.createElement('div');
     divSizeMenu.id = 'size-menu';
@@ -100,7 +91,7 @@ export default class IconEvents {
     </div>
     `).join('');
     element.appendChild(divSizeMenu);
-    document.querySelector(`[data-size='${this.canvasController[type].selectedSize}']`).firstElementChild.classList.add('tools-menu__size--active');
+    document.querySelector(`[data-size='${tool.selectedSize}']`).firstElementChild.classList.add('tools-menu__size--active');
   }
 
   changeColor() {

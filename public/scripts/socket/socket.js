@@ -1,3 +1,5 @@
+import Brush from '../canvas/tools/brush';
+
 export default class Socket {
   constructor() {
     this.socket = io();
@@ -49,8 +51,10 @@ export default class Socket {
   sendDraw(pathArray, brush, color) {
     const newBrush = Object.assign(brush, { selectedColor: color });
 
+    const isBrush = newBrush instanceof Brush;
+
     this.socket.emit('draw', {
-      path: pathArray, brush: newBrush, id: this.socket.id, notify: this.notificar,
+      path: pathArray, brush: newBrush, id: this.socket.id, notify: this.notificar, isBrush,
     });
   }
 

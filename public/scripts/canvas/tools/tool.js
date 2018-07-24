@@ -1,17 +1,17 @@
-export default class Tool{
-    constructor(socket){
-        if (this.constructor === Tool) {
-            throw new TypeError("Cannot construct Abstract instances directly");
-        }
-
-        this.socket = socket;
+export default class Tool {
+  constructor() {
+    if (this.constructor === Tool) {
+      throw new TypeError('Cannot construct Abstract instances directly');
     }
 
-    action(canvasController){
-        throw new TypeError("Do not call abstract method foo from child.");
-    }
+    this.color = 'black';
+  }
 
-    sendToSocket(){
-        throw new TypeError("Do not call abstract method foo from child.");
-    }
+  action(canvasController, pathArray = null, firstClick = false) {
+    throw new TypeError('Do not call abstract method foo from child.');
+  }
+
+  sendToSocket(canvasController, pathArray = null) {
+    throw new TypeError('Do not call abstract method foo from child.');
+  }
 }

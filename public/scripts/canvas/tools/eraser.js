@@ -1,14 +1,13 @@
 import FreeHandTool from './freeHandTool';
 
-export default class Eraser extends FreeHandTool{
-    constructor(socket){
-        super(socket);
+export default class Eraser extends FreeHandTool {
+  constructor() {
+    super();
+    this.compositeOperation = 'destination-out';
+  }
 
-        this.compositeOperation = 'destination-out';
-    }
-
-    action(canvasController){
-        canvasController.selectEraser(this);
-        FreeHandTool.draw(canvasController);
-    }
+  action(canvasController, pathArray = null, firstClick = false) {
+    canvasController.selectTool(this);
+    FreeHandTool.draw(canvasController, firstClick);
+  }
 }
