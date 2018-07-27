@@ -1,6 +1,5 @@
 import { hexToRGBA } from '../utils/color';
-import FreeHandTool from '../canvas/tools/freeHandTool';
-import Brush from '../canvas/tools/brush';
+import FreeHandTool from '../canvas/tools/FreeHandTools/freeHandTool';
 
 export default class IconEvents {
   constructor(canvasController) {
@@ -13,20 +12,27 @@ export default class IconEvents {
     this.textIcon = document.getElementById('text-icon');
     this.colorIcon = document.getElementById('color-icon');
     this.clearIcon = document.getElementById('clear-icon');
+    this.btnUndo = document.getElementById('btn-undo');
+    this.btnRedo = document.getElementById('btn-redo');
 
     this.colorPicker = document.createElement('input');
     this.colorPicker.setAttribute('type', 'color');
   }
 
   setEvents() {
-    this.burguerIcon.addEventListener('click', (event) => {});
+    this.burguerIcon.addEventListener('click', () => {});
     this.brushIcon.addEventListener('click', (event) => { this.selectTool(event, this.brushIcon, this.canvasController.tools.brush); });
     this.eraserIcon.addEventListener('click', (event) => { this.selectTool(event, this.eraserIcon, this.canvasController.tools.eraser); });
-    this.bucketIcon.addEventListener('click', (event) => { this.selectTool(event, this.bucketIcon, 'bucket'); });
-    this.pickerIcon.addEventListener('click', (event) => { this.selectTool(event, this.pickerIcon, 'picker'); });
-    this.colorIcon.addEventListener('click', (event) => { this.colorPicker.click(); });
-    this.colorPicker.addEventListener('change', (event) => { this.changeColor(); });
-    this.clearIcon.addEventListener('click', (event) => { this.selectTool(event, this.clearIcon, 'clear'); });
+    this.bucketIcon.addEventListener('click', (event) => { this.selectTool(event, this.bucketIcon, this.canvasController.tools.bucket); });
+    this.pickerIcon.addEventListener('click', (event) => { this.selectTool(event, this.pickerIcon, this.canvasController.tools.picker); });
+    this.colorIcon.addEventListener('click', () => { this.colorPicker.click(); });
+    this.colorPicker.addEventListener('change', () => { this.changeColor(); });
+    this.clearIcon.addEventListener('click', () => { this.clearCanvas(); });
+
+    this.btnUndo.addEventListener('mousedown', (event) => { this.undo(event); });
+    this.btnRedo.addEventListener('mousedown', (event) => { this.redo(event); });
+    // this.btnUndo.addEventListener('touchstart', (event) => { this.undo(event); });
+    // this.btnRedo.addEventListener('touchstart', (event) => { this.redo(event); });
   }
 
   selectTool(event, element, tool) {
@@ -39,41 +45,18 @@ export default class IconEvents {
     element.firstElementChild.classList.add('tools-menu__icon--active');
 
     if (tool instanceof FreeHandTool) {
-      this.openSizeMenu(element, tool);
-      return;
+      IconEvents.openSizeMenu(element, tool);
     }
 
     this.canvasController.selectTool(tool);
-
-    // if (tool === 'bucket') {
-    //   this.selectBucket();
-    //   return;
-    // }
-
-    // if (tool === 'picker') {
-    //   this.selectPicker();
-    //   return;
-    // }
-
-    this.clearCanvas();
-    this.brushIcon.click();
   }
 
-  openSizeMenu(element, tool) {
+  static openSizeMenu(element, tool) {
     if (element.childElementCount > 1) {
       return;
     }
-    this.canvasController.selectTool(tool);
     IconEvents.createSizeMenuElement(element, tool);
   }
-
-  // selectBucket() {
-  //   this.canvasController.selectedTool = 'bucket';
-  // }
-
-  // selectPicker() {
-  //   this.canvasController.selectedTool = 'picker';
-  // }
 
   clearCanvas() {
     this.canvasController.clearCanvas();
@@ -115,5 +98,19 @@ export default class IconEvents {
     icons.forEach((element) => {
       element.classList.remove('tools-menu__icon--active');
     });
+  }
+
+  undo(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.canvasController.socket.sendUndo();
+  }
+
+  redo(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.canvasController.socket.sendRedo();
   }
 }

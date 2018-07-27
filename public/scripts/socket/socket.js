@@ -1,4 +1,4 @@
-import Brush from '../canvas/tools/brush';
+import Brush from '../canvas/tools/FreeHandTools/brush';
 
 export default class Socket {
   constructor() {
@@ -48,13 +48,13 @@ export default class Socket {
   }
 
   // function that sends the draw event
-  sendDraw(pathArray, brush, color) {
-    const newBrush = Object.assign(brush, { selectedColor: color });
+  sendFreeHandDrawing(pathArray, freeHandTool, color) {
+    const newFreeHandTool = Object.assign(freeHandTool, { selectedColor: color });
 
-    const isBrush = newBrush instanceof Brush;
+    const isBrush = newFreeHandTool instanceof Brush;
 
     this.socket.emit('draw', {
-      path: pathArray, brush: newBrush, id: this.socket.id, notify: this.notificar, isBrush,
+      path: pathArray, brush: newFreeHandTool, id: this.socket.id, notify: this.notificar, isBrush,
     });
   }
 

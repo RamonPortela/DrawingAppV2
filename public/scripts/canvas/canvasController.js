@@ -1,28 +1,24 @@
-// import Brush from './brush';
 import CanvasEvents from './canvasEvents';
 import floodFill from './bucket';
 import IconEvents from '../DOM/IconEvents';
 import { rgbToHex } from '../utils/color';
-import Brush from './tools/brush';
-import Eraser from './tools/eraser';
+import Brush from './tools/FreeHandTools/brush';
+import Eraser from './tools/FreeHandTools/eraser';
+import Bucket from './tools/bucket/bucket';
+import ColorPicker from './tools/picker/picker';
 
 export default class CanvasController {
   constructor(socket) {
-    // this.brush = new Brush(true);
-    // this.eraser = new Brush(false);
-
     this.tools = {
       brush: new Brush(),
       eraser: new Eraser(),
+      bucket: new Bucket(),
+      picker: new ColorPicker(),
     };
-
 
     this.canvas = document.getElementById('canvas');
     this.context = this.canvas.getContext('2d');
-
     this.canvasContainer = this.canvas.parentElement;
-    this.btnUndo = document.getElementById('btn-undo');
-    this.btnRedo = document.getElementById('btn-redo');
 
     this.selectedTool = this.tools.brush;
     this.selectedColor = 'black';
@@ -66,72 +62,29 @@ export default class CanvasController {
   selectTool(tool = null) {
     if (tool) {
       this.selectedTool = tool;
+      this.selectedTool.selectedColor = this.selectedColor;
     }
-    this.context.globalCompositeOperation = this.selectedTool.compositeOperation;
-    this.context.lineWidth = this.selectedTool.selectedSize;
-    this.context.lineCap = this.selectedTool.style;
-    this.context.lineJoin = this.selectedTool.style;
+    this.setContextStyle(this.selectedTool);
   }
 
   selectToolSocket(tool) {
+    this.setContextStyle(tool);
+  }
+
+  setContextStyle(tool) {
     this.context.globalCompositeOperation = tool.compositeOperation;
+    this.context.strokeStyle = tool.selectedColor || this.selectedColor;
     this.context.lineWidth = tool.selectedSize;
     this.context.lineCap = tool.style;
     this.context.lineJoin = tool.style;
   }
 
-
-  // selectBrush() {
-  //   this.selectedTool = this.tools.brush;
-  //   this.context.globalCompositeOperation = this.selectedTool.compositeOperation;
-  //   this.context.lineWidth = this.selectedTool.selectedSize;
-  //   this.context.lineCap = this.selectedTool.style;
-  //   this.context.lineJoin = this.selectedTool.style;
-  // }
-
-  // setToolStyle() {
-  //   this.context.globalCompositeOperation = this.selectedTool.compositeOperation;
-  //   this.context.strokeStyle = brush.selectedColor || this.selectedColor;
-  //   this.context.lineWidth = this.selectedTool.selectedSize;
-  //   this.context.lineCap = brush.style;
-  //   this.context.lineJoin = brush.style;
-  // }
-
-  // selectBrush(brush = this.brush) {
-  //   this.context.globalCompositeOperation = 'source-over';
-  //   this.context.strokeStyle = brush.selectedColor || this.selectedColor;
-  //   this.context.lineWidth = brush.selectedSize;
-  //   this.context.lineCap = brush.style;
-  //   this.context.lineJoin = brush.style;
-  // }
-
-  // selectEraser(eraser = this.eraser) {
-  //   this.context.globalCompositeOperation = 'destination-out';
-  //   this.context.lineWidth = eraser.selectedSize;
-  //   this.context.lineCap = eraser.style;
-  //   this.context.lineJoin = eraser.style;
-  // }
-
   changeToolSize(newSize) {
     this.selectedTool.changeSize(newSize);
   }
 
-  // changeBrushValues(newValues) {
-  //   this.brush = Object.assign(this.brush, newValues);
-  //   this.selectBrush();
-  // }
-
-  // changeEraserValues(newValues) {
-  //   this.eraser = Object.assign(this.eraser, newValues);
-  //   this.selectEraser();
-  // }
-
   changeColor() {
     this.context.strokeStyle = this.selectedColor;
-  }
-
-  selectBucket() {
-    this.context.globalCompositeOperation = 'source-over';
   }
 
   setPositions(x, y) {
@@ -146,29 +99,6 @@ export default class CanvasController {
     this.currentY = (y - BB.top) * scaleY;
   }
 
-  draw(firstClick) {
-    if (this.selectedTool === 'bucket') {
-      const position = [this.currentX, this.currentY];
-      const clickedPixel = this.context.getImageData(this.currentX, this.currentY, 1, 1).data;
-      floodFill(this.context, position, clickedPixel, this.selectedColorRGBA, this.canvas);
-      return;
-    }
-
-    if (this.selectedTool === 'picker') {
-      this.getColor();
-      return;
-    }
-
-    if (this.selectedTool === 'brush') { this.selectBrush(); } else { this.selectEraser(); }
-
-    this.context.beginPath();
-    if (!firstClick) {
-      this.context.moveTo(this.previousX, this.previousY);
-    }
-    this.context.lineTo(this.currentX, this.currentY);
-    this.context.stroke();
-  }
-
   drawFromSocket(data) {
     const type = data.isBrush ? new Brush() : new Eraser();
     const brush = Object.assign(type, data.brush);
@@ -176,7 +106,7 @@ export default class CanvasController {
     this.context.beginPath();
     this.context.moveTo(data.path[0].x, data.path[0].y);
 
-    this.selectTool(brush);
+    this.selectToolSocket(brush);
     if (data.path.length === 1) {
       this.context.lineTo(data.path[0].x, data.path[0].y);
       this.context.stroke();
@@ -184,6 +114,7 @@ export default class CanvasController {
     }
 
     for (let i = 1; i < data.path.length; i += 1) {
+      this.selectToolSocket(brush);
       this.context.lineTo(data.path[i].x, data.path[i].y);
     }
     this.context.stroke();
@@ -210,10 +141,6 @@ export default class CanvasController {
     this.iconEvents.colorPicker.value = rgbToHex(r, g, b);
     this.iconEvents.colorPicker.dispatchEvent(new Event('change', { bubbles: true }));
     this.iconEvents.brushIcon.click();
-
-    // line.color = colorDiv.style.backgroundColor = "RGBA("+pixel[0]+", "+pixel[1]+", "+pixel[2]+", 255)";
-    // colorInput.value = rgbToHex(pixel[0], pixel[1], pixel[2]);
-    // btnPincel.click();
   }
 
   savePreviousDrawing() {
@@ -224,15 +151,21 @@ export default class CanvasController {
     this.currentDrawing = this.canvas.toDataURL();
   }
 
+  startDrawing() {
+    this.drawing = true;
+  }
+
+  stopDrawing() {
+    this.drawing = false;
+  }
+
   setImage(image, clear = false) {
     if (clear) {
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
       return;
     }
 
-    if (image === null) {
-      return;
-    }
+    if (image === null) { return; }
 
     const baseImage = new Image();
     baseImage.src = image;
@@ -246,18 +179,14 @@ export default class CanvasController {
   }
 
   clearCanvas() {
-    this.previousDrawing = this.canvas.toDataURL();
+    this.savePreviousDrawing();
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.currentDrawing = this.canvas.toDataURL();
-    this.events.clearCanvas(this);
+    this.saveCurrentDrawing();
+    this.socket.sendClear();
+    this.socket.sendDrawData({ current: this.currentDrawing, previous: this.previousDrawing });
   }
 
   setEvents() {
-    this.btnUndo.addEventListener('mousedown', (event) => { this.events.undo(event); });
-    this.btnRedo.addEventListener('mousedown', (event) => { this.events.redo(event); });
-    this.btnUndo.addEventListener('touchstart', (event) => { this.events.undo(event); });
-    this.btnRedo.addEventListener('touchstart', (event) => { this.events.redo(event); });
-
     this.canvasContainer.addEventListener('mousedown', (event) => { this.events.clickStartHandler(event, this); });
     this.canvasContainer.addEventListener('touchstart', (event) => { this.events.touchStartHandler(event, this); });
 

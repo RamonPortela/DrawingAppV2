@@ -1,4 +1,4 @@
-import Tool from './tool';
+import Tool from '../tool';
 
 export default class FreeHandTool extends Tool {
   constructor() {
@@ -25,6 +25,15 @@ export default class FreeHandTool extends Tool {
     return size < minSize || size > maxSize;
   }
 
+  action(canvasController, pathArray = null, firstClick = false) {
+    if (firstClick) {
+      canvasController.savePreviousDrawing();
+    }
+    canvasController.selectTool(this);
+    FreeHandTool.draw(canvasController, firstClick);
+    pathArray.push({ x: canvasController.currentX, y: canvasController.currentY });
+  }
+
   static draw(canvasController, firstClick = false) {
     const {
       context, previousX, previousY, currentX, currentY,
@@ -44,8 +53,17 @@ export default class FreeHandTool extends Tool {
       const {
         selectedTool, selectedColor, currentDrawing, previousDrawing, socket,
       } = canvasController;
-      socket.sendDraw(pathArray, selectedTool, selectedColor);
-      socket.sendDrawData({ current: currentDrawing, previousDrawing });
+      socket.sendFreeHandDrawing(pathArray, selectedTool, selectedColor);
+      socket.sendDrawData({ current: currentDrawing, previous: previousDrawing });
+    }
+  }
+
+  sendToSocketPartial(canvasController, pathArray = null) {
+    if (pathArray.length > 0) {
+      const {
+        selectedTool, selectedColor, socket,
+      } = canvasController;
+      socket.sendFreeHandDrawing(pathArray, selectedTool, selectedColor);
     }
   }
 }

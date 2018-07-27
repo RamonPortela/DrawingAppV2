@@ -11,15 +11,23 @@ export default class Bucket extends Tool {
     const {
       canvas, context, currentX, currentY, selectedColorRGBA,
     } = canvasController;
-    let { previousDrawing, currentDrawing } = canvasController;
 
+    canvasController.startDrawing();
 
-    const position = [currentX, currentY];
-    const selectedColor = selectedColorRGBA;
-    previousDrawing = canvas.toDataURL();
-    canvasController.draw(true);
-    currentDrawing = canvas.toDataURL();
-    this.socket.sendFloodFill(position, selectedColor);
-    this.socket.sendDrawData({ current: currentDrawing, previous: previousDrawing });
+    canvasController.savePreviousDrawing();
+    this.selectedColor = selectedColorRGBA;
+    this.position = [currentX, currentY];
+    this.clickedPixel = context.getImageData(currentX, currentY, 1, 1).data;
+    floodFill(context, this.position, this.clickedPixel, selectedColorRGBA, canvas);
+    canvasController.saveCurrentDrawing();
+  }
+
+  sendToSocket(canvasController) {
+    canvasController.saveCurrentDrawing();
+    const {
+      currentDrawing, previousDrawing, socket,
+    } = canvasController;
+    socket.sendFloodFill(this.position, this.selectedColor);
+    socket.sendDrawData({ current: currentDrawing, previous: previousDrawing });
   }
 }
